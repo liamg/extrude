@@ -11,12 +11,13 @@ func (m *Metadata) CreateReport() (report.Report, error) {
 	overview.AddKeyValue("Format", m.File.Format.String())
 
 	if m.ELF != nil {
-		overview.AddKeyValue("Architecture", m.ELF.Machine.String())
+		overview.AddKeyValue("Platform", m.ELF.Machine.String())
 		overview.AddKeyValue("OS/ABI", m.ELF.OSABI.String())
 	}
 
-	overview.AddKeyValue("Compiler", m.Compiler.Name)
+	overview.AddKeyValue("Compiler Name", m.Compiler.Name)
 	overview.AddKeyValue("Compiler Version", m.Compiler.Version)
+	overview.AddKeyValue("Source Language", m.Compiler.Language)
 
 	rep.AddSection(overview)
 
