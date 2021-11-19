@@ -1,26 +1,35 @@
 package elf
 
 import (
+	"debug/elf"
 	"io"
+	"path/filepath"
 
 	"github.com/liamg/extrude/pkg/format"
 	"github.com/liamg/extrude/pkg/report"
 )
 
-func Parse(
-	seeker io.ReadSeeker,
-	filename string,
-	format format.Format,
-) (report.Report, error) {
+type parser struct{}
 
-	rep := report.New()
+func New() *parser {
+	return &parser{}
+}
 
-	overview := report.NewSection("Overview")
+func (*parser) Parse(r io.ReaderAt, path string, format format.Format) (report.Reporter, error) {
 
-	overview.AddKeyValue("Filename", filename)
-	overview.AddKeyValue("Format", format.String())
+	var metadata Metadata
 
-	rep.AddSection(overview)
+	metadata.File.Path = path
+	metadata.File.Name = filepath.Base(path)
+	metadata.File.Format = format
 
-	return rep, nil
+	f, err := elf.NewFile(r)
+	if err != nil {
+		return nil, err
+	}
+	metadata.ELF = f
+	if err := metadata.analyse(); err != nil {
+		return nil, err
+	}
+	return &metadata, nil
 }

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/liamg/extrude/internal/app/extrude"
 	"github.com/liamg/extrude/pkg/output"
+	"github.com/liamg/extrude/pkg/parser"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +14,7 @@ var rootCmd = &cobra.Command{
 	Short: "Analyse an executable",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		report, err := extrude.Analyse(args[0])
+		report, err := parser.ParseFile(args[0])
 		if err != nil {
 			fail("Error: %s\n", err)
 		}

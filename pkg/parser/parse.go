@@ -10,24 +10,32 @@ import (
 )
 
 func ParseFile(path string) (report.Report, error) {
-	f, err := os.Open(path)
+
+	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
+
+	f, err := os.Open(absPath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = f.Close() }()
 
 	fileFormat, err := format.Sniff(f)
 	if err != nil {
 		return nil, fmt.Errorf("failed to derive file format: %w", err)
 	}
 
-	parseFunc, ok := parsers[fileFormat]
+	parser, ok := parsers[fileFormat]
 	if !ok {
-		return nil, fmt.Errorf("parsing not supported for %s files", fileFormat.Short())
+		return nil, fmt.Errorf("parsing not supported for %s files", fileFormat.Long())
 	}
 
-	if _, err := f.Seek(0, 0); err != nil {
+	reporter, err := parser.Parse(f, path, fileFormat)
+	if err != nil {
 		return nil, err
 	}
 
-	return parseFunc(f, filepath.Base(path), fileFormat)
+	return reporter.CreateReport()
 }

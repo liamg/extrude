@@ -5,12 +5,9 @@ import (
 	"io"
 )
 
-func Sniff(seeker io.ReadSeeker) (Format, error) {
-	if _, err := seeker.Seek(0, 0); err != nil {
-		return Unknown, err
-	}
+func Sniff(r io.ReaderAt) (Format, error) {
 	buffer := make([]byte, 4)
-	if _, err := seeker.Read(buffer); err != nil {
+	if _, err := r.ReadAt(buffer, 0); err != nil {
 		return Unknown, err
 	}
 	for _, definition := range definitions {
