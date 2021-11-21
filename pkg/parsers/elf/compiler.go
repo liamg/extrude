@@ -23,11 +23,13 @@ func (c Compiler) String() string {
 }
 
 var (
-	rgxGCC          = regexp.MustCompile(`GCC: \(GNU\) [\d\.]+`)
+	rgxGCC          = regexp.MustCompile(`GCC \(GNU\) [\d\.]+`)
 	rgxGHC          = regexp.MustCompile(`GHC \d+\.\d+(\.\d+)?`)
 	rgxGo           = regexp.MustCompile(`go\d+\.\d+(\.\d+)?`)
 	rgxRust         = regexp.MustCompile(`rustc version [^(]+`)
 	rgxRustStripped = regexp.MustCompile(`rustc version \d+\.\d+(\.\d+)(\-[a-z]+)`)
+	rgxOCaml        = regexp.MustCompile(`OCaml.*version \d+\.(\d+\.)?\d+`)
+	rgxNim          = regexp.MustCompile(`system\.nim`)
 )
 
 func (m *Metadata) findCompiler() {
@@ -39,7 +41,7 @@ func (m *Metadata) findCompiler() {
 	// Go
 	// example: "go1.17"
 	if m.ELF.Section(".gosymtab") != nil {
-		m.Compiler.Name = "Go"
+		m.Compiler.Name = "go"
 		m.Compiler.Language = "Go"
 		if roData := m.ELF.Section(".rodata"); roData != nil {
 			if raw, err := roData.Data(); err == nil {
@@ -56,7 +58,7 @@ func (m *Metadata) findCompiler() {
 	if debugData := m.ELF.Section(".debug_str"); debugData != nil {
 		if raw, err := debugData.Data(); err == nil {
 			if version := rgxRust.Find(raw); version != nil {
-				m.Compiler.Name = "Rustc"
+				m.Compiler.Name = "rustc"
 				m.Compiler.Language = "Rust"
 				m.Compiler.Version = strings.Split(string(version), " ")[2]
 				return
@@ -64,24 +66,33 @@ func (m *Metadata) findCompiler() {
 		}
 	}
 
-	// Rust stripped
 	if roData := m.ELF.Section(".rodata"); roData != nil {
 		if raw, err := roData.Data(); err == nil {
+
+			// Rust stripped
 			if version := rgxRustStripped.Find(raw); version != nil {
-				m.Compiler.Name = "Rustc"
+				m.Compiler.Name = "rustc"
 				m.Compiler.Version = string(version)
 				m.Compiler.Language = "Rust"
 				return
 			}
+
+			// OCaml
+			if version := rgxOCaml.Find(raw); version != nil {
+				m.Compiler.Name = "ocamlc"
+				m.Compiler.Version = strings.Split(string(version), "version ")[1]
+				m.Compiler.Language = "OCaml"
+				return
+			}
+
+			// Nim
+			if version := rgxNim.Find(raw); version != nil {
+				m.Compiler.Name = "nim"
+				m.Compiler.Language = "Nim"
+				return
+			}
 		}
 	}
-
-	// TODO:
-	// ocaml
-	// d
-	// pac (pascal)
-	// tcc
-	// nim
 
 	// .comment
 	if commentData := m.ELF.Section(".comment"); commentData != nil {
@@ -89,7 +100,7 @@ func (m *Metadata) findCompiler() {
 
 			// ghc
 			if ghcVersion := rgxGHC.Find(raw); ghcVersion != nil {
-				m.Compiler.Name = "GHC"
+				m.Compiler.Name = "ghc"
 				m.Compiler.Language = "Haskell"
 				m.Compiler.Version = strings.Split(string(ghcVersion), " ")[1]
 				return
@@ -98,12 +109,19 @@ func (m *Metadata) findCompiler() {
 			// gcc
 			// example: "GCC: (GNU) 4.8.5"
 			if gccVersion := rgxGCC.Find(raw); gccVersion != nil {
-				m.Compiler.Name = "GCC"
-				m.Compiler.Language = "C/C++"
+				m.Compiler.Name = "gcc"
+				m.Compiler.Language = "C/C++ (likely)"
 				m.Compiler.Version = strings.Split(string(gccVersion), " ")[2]
 				return
 			}
 		}
 	}
 
+	if m.ELF.Section(".note.ABI-tag") != nil {
+		m.Compiler.Name = "gcc"
+		m.Compiler.Language = "C/C++ (likely)"
+	} else if m.ELF.Section(".rodata.cst4") != nil {
+		m.Compiler.Name = "tcc"
+		m.Compiler.Language = "C/C++"
+	}
 }

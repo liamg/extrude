@@ -51,7 +51,7 @@ func TestFormatSniffing(t *testing.T) {
 		t.Run(
 			fmt.Sprintf("%q -> %s", string(test.content), test.expected),
 			func(t *testing.T) {
-				buffer := bytes.NewReader(test.content)
+				buffer := bytes.NewReader(append(test.content, make([]byte, 32)...))
 				format, err := Sniff(buffer)
 				require.NoError(t, err)
 				assert.Equal(t, test.expected, format)
