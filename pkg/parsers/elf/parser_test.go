@@ -28,7 +28,7 @@ func TestELFDerivingCompiler(t *testing.T) {
 
 	for _, test := range tests {
 		path := filepath.Join("_testdata", test.file)
-		t.Run("", func(t *testing.T) {
+		t.Run(test.expected, func(t *testing.T) {
 
 			f, err := os.Open(path)
 			require.NoError(t, err)
