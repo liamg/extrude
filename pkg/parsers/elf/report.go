@@ -21,5 +21,19 @@ func (m *Metadata) CreateReport() (report.Report, error) {
 
 	rep.AddSection(overview)
 
+	security := report.NewSection("security")
+
+	security.AddKeyValue("Fortified Source", boolToResult(m.Hardening.FortifySourceFunctions))
+	security.AddKeyValue("Stack Protection", boolToResult(m.Hardening.StackProtected))
+
+	rep.AddSection(security)
+
 	return rep, nil
+}
+
+func boolToResult(in bool) string {
+	if in {
+		return "PASS"
+	}
+	return "FAIL"
 }

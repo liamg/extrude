@@ -12,6 +12,7 @@ type Metadata struct {
 		Name   string
 		Format format.Format
 	}
-	ELF      *elf.File
-	Compiler Compiler
+	ELF       *elf.File
+	Compiler  Compiler
+	Hardening Hardening
 }
