@@ -2,9 +2,9 @@ package report
 
 type Report interface {
 	Sections() []Section
-	Issues() []Issue
+	ResultsTable() *Table
 	AddSection(Section)
-	AddIssue(Issue)
+	SetResultsTable(t *Table)
 }
 
 type Reporter interface {
@@ -13,7 +13,7 @@ type Reporter interface {
 
 type report struct {
 	sections []Section
-	issues   []Issue
+	table    Table
 }
 
 func New() Report {
@@ -28,10 +28,10 @@ func (r *report) AddSection(s Section) {
 	r.sections = append(r.sections, s)
 }
 
-func (r *report) Issues() []Issue {
-	return r.issues
+func (r *report) SetResultsTable(t *Table) {
+	r.table = *t
 }
 
-func (r *report) AddIssue(i Issue) {
-	r.issues = append(r.issues, i)
+func (r *report) ResultsTable() *Table {
+	return &r.table
 }

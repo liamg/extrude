@@ -21,12 +21,12 @@ func (m *Metadata) CreateReport() (report.Report, error) {
 
 	rep.AddSection(overview)
 
-	security := report.NewSection("security")
+	table := report.NewTable()
 
-	security.AddKeyValue("Fortified Source", boolToResult(m.Hardening.FortifySourceFunctions))
-	security.AddKeyValue("Stack Protection", boolToResult(m.Hardening.StackProtected))
+	table.AddRow("Fortified Source", boolToResult(m.Hardening.FortifySourceFunctions))
+	table.AddRow("Stack Protection", boolToResult(m.Hardening.StackProtected))
 
-	rep.AddSection(security)
+	rep.SetResultsTable(table)
 
 	return rep, nil
 }
