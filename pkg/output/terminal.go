@@ -1,6 +1,8 @@
 package output
 
 import (
+	"fmt"
+	"regexp"
 	"strings"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -50,20 +52,93 @@ func (t *terminalOutput) printBlank() {
 	t.printIn("")
 }
 
+var rgxHtml = regexp.MustCompile(`<[^>]+>`)
+
+func stripTags(input string) string {
+	return rgxHtml.ReplaceAllString(input, "")
+}
+
+func (t *terminalOutput) limitSize(input string, size int) []string {
+	var word string
+	var words []string
+	var inTag bool
+	var lastRune rune
+	var hasClosing bool
+	for _, r := range []rune(input) {
+		if inTag {
+			word += string(r)
+			if hasClosing && r == '>' {
+				inTag = false
+				hasClosing = false
+				words = append(words, word)
+				word = ""
+			} else if lastRune == '<' && r == '/' {
+				hasClosing = true
+			}
+		} else {
+			if r == '<' {
+				if word != "" {
+					words = append(words, word)
+				}
+				word = "<"
+				inTag = true
+			} else if r == ' ' {
+				words = append(words, word)
+			} else {
+				word += string(r)
+			}
+		}
+		lastRune = r
+	}
+	if word != "" {
+		words = append(words, word)
+	}
+
+	var line string
+	var currentSize int
+	var lines []string
+
+	for _, word := range words {
+		if word[0] == '<' {
+			line += word
+			continue
+		}
+		if currentSize+len(word) > size {
+			lines = append(lines, line)
+			line = word
+			currentSize = len(word)
+		} else {
+			if line != "" {
+				line += " "
+				currentSize++
+			}
+			line += word
+			currentSize += len(word)
+		}
+	}
+
+	if line != "" {
+		lines = append(lines, line)
+	}
+
+	return lines
+}
+
 func (t *terminalOutput) printIn(format string, args ...interface{}) {
+
+	realStr := stripTags(fmt.Sprintf(format, args...))
 	str := tml.Sprintf(format, args...)
-	repeat := t.width - 2 - len(str)
+	repeat := t.width - 4 - len([]rune(realStr))
 	padded := str
 	if repeat > 0 {
-		padded = str + strings.Repeat(" ", t.width-2-len(str))
+		padded = str + strings.Repeat(" ", repeat)
 	}
-	_ = tml.Printf("<dim>%c</dim> %s <dim>%c</dim>\n", borderVertical, padded, borderVertical)
+	_ = tml.Printf("<dim>%c</dim> ", borderVertical)
+	fmt.Printf("%s", padded)
+	_ = tml.Printf(" <dim>%c</dim>\n", borderVertical)
 }
 
 func (t *terminalOutput) Output(rep report.Report) error {
-
-	_ = tml.Printf(`<dim>
-`)
 
 	for _, section := range rep.Sections() {
 		t.printHeader(section.Heading())
@@ -73,21 +148,29 @@ func (t *terminalOutput) Output(rep report.Report) error {
 				maxKeyLen = len(keyVal.Key())
 			}
 		}
-		// add extra padding
 		for _, keyVal := range section.KeyValues() {
-			paddedKey := strings.Repeat(" ", maxKeyLen-len(keyVal.Key())) + keyVal.Key()
+			paddedKey := strings.Repeat(" ", 1+maxKeyLen-len(keyVal.Key())) + keyVal.Key()
 			t.printIn("%s  <blue>%s</blue>", paddedKey, keyVal.Value())
 		}
 		t.printFooter()
 	}
 
 	t.printHeader("Security")
-	for _, row := range rep.ResultsTable().Rows() {
-		var rowStr string
-		for _, col := range row {
-			rowStr += tml.Sprintf("%c%s", borderVertical, col)
+	for i, test := range rep.ResultsTable().Tests() {
+
+		if i > 0 {
+			t.printBlank()
 		}
-		t.printIn("%s%c", rowStr, borderVertical)
+
+		switch test.Result {
+		case report.Pass:
+			t.printIn("<green>✔ %s", test.Name)
+		case report.PartialFail:
+			t.printIn("<yellow>⚠ %s", test.Name)
+		case report.Fail:
+			t.printIn("<red>× %s", test.Name)
+		}
+		t.printIn("  FUCK")
 	}
 	t.printFooter()
 

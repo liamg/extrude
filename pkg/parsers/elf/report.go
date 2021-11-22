@@ -23,17 +23,17 @@ func (m *Metadata) CreateReport() (report.Report, error) {
 
 	table := report.NewTable()
 
-	table.AddRow("Fortified Source", boolToResult(m.Hardening.FortifySourceFunctions))
-	table.AddRow("Stack Protection", boolToResult(m.Hardening.StackProtected))
+	table.AddTest("Fortified Source", boolToResult(m.Hardening.FortifySourceFunctions), ``)
+	table.AddTest("Stack Protection", boolToResult(m.Hardening.StackProtected), ``)
 
 	rep.SetResultsTable(table)
 
 	return rep, nil
 }
 
-func boolToResult(in bool) string {
+func boolToResult(in bool) report.Result {
 	if in {
-		return "PASS"
+		return report.Pass
 	}
-	return "FAIL"
+	return report.Pass
 }
