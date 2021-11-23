@@ -4,6 +4,14 @@ type Section interface {
 	Heading() string
 	KeyValues() []KeyValue
 	AddKeyValue(key, value string)
+	AddTest(name string, result Result, description string)
+	Tests() []Test
+}
+
+type Test struct {
+	Name        string
+	Result      Result
+	Description string
 }
 
 func NewSection(heading string) Section {
@@ -15,8 +23,28 @@ func NewSection(heading string) Section {
 type section struct {
 	heading   string
 	keyValues []KeyValue
+	tests     []Test
 }
 
+type Result uint8
+
+const (
+	Fail Result = iota
+	Warning
+	Pass
+)
+
+func (s *section) AddTest(name string, result Result, description string) {
+	s.tests = append(s.tests, Test{
+		Name:        name,
+		Result:      result,
+		Description: description,
+	})
+}
+
+func (s *section) Tests() []Test {
+	return s.tests
+}
 func (s *section) Heading() string {
 	return s.heading
 }

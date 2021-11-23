@@ -22,12 +22,18 @@ const (
 	borderRightT      = '┤'
 )
 
-func Terminal(rep report.Report) error {
+func Terminal(rep report.Report, options *Options) error {
 	width, _, err := terminal.GetSize(0)
 	if err != nil {
 		width = 80
 	}
-	return (&terminalOutput{width: width}).Output(rep)
+	if options == nil {
+		options = &Options{}
+	}
+	return (&terminalOutput{
+		width:   width,
+		options: options,
+	}).Output(rep)
 }
 
 func safeRepeat(input string, repeat int) string {
@@ -38,7 +44,8 @@ func safeRepeat(input string, repeat int) string {
 }
 
 type terminalOutput struct {
-	width int
+	width   int
+	options *Options
 }
 
 func (t *terminalOutput) printHeader(heading string) {
@@ -199,24 +206,32 @@ func (t *terminalOutput) Output(rep report.Report) error {
 		for _, keyVal := range section.KeyValues() {
 			t.printIn(1+maxKeyLen-len(keyVal.Key()), "%s  <blue>%s</blue>", keyVal.Key(), keyVal.Value())
 		}
-	}
 
-	t.printDivider("Security")
-	for i, test := range rep.ResultsTable().Tests() {
-
-		if i > 0 {
-			t.printBlank()
+		var printedTests bool
+		for _, test := range section.Tests() {
+			if test.Result == report.Pass && !t.options.IncludePassingTests {
+				continue
+			}
+			if printedTests {
+				t.printBlank()
+			} else {
+				printedTests = true
+			}
+			switch test.Result {
+			case report.Pass:
+				t.printIn(0, "<green>✔ %s", test.Name)
+			case report.Warning:
+				t.printIn(0, "<yellow>⚠ %s", test.Name)
+			case report.Fail:
+				t.printIn(0, "<red>× %s", test.Name)
+			}
+			t.printIn(2, test.Description)
 		}
 
-		switch test.Result {
-		case report.Pass:
-			t.printIn(0, "<green>✔ %s", test.Name)
-		case report.PartialFail:
-			t.printIn(0, "<yellow>⚠ %s", test.Name)
-		case report.Fail:
-			t.printIn(0, "<red>× %s", test.Name)
+		if len(section.KeyValues()) == 0 && !printedTests {
+			t.printIn(0, "<green>No issues detected.</green>")
 		}
-		t.printIn(2, test.Description)
+
 	}
 	t.printFooter()
 

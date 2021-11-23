@@ -1,6 +1,9 @@
 package elf
 
-import "fmt"
+import (
+	"debug/elf"
+	"fmt"
+)
 
 type Hardening struct {
 	StackProtected         bool
@@ -109,4 +112,15 @@ func (m *Metadata) checkHardened() {
 	}
 
 	m.Hardening.FortifySourceFunctions = !hasLibc || hasProtected
+
+	m.Hardening.PositionIndependent = m.ELF.Type != elf.ET_EXEC
+
+	for _, prog := range m.ELF.Progs {
+		if prog.Type == elf.PT_GNU_RELRO {
+			m.Hardening.ReadOnlyRelocations = true
+		}
+	}
+
+	// TODO: see https://github.com/nya3jp/tast-tests/blob/9fd02c2b27c3d2ec52299a95bc4b26a7e662b034/src/chromiumos/tast/local/bundles/cros/security/toolchain/verify.go#L22
+
 }

@@ -2,9 +2,8 @@ package report
 
 type Report interface {
 	Sections() []Section
-	ResultsTable() *Table
 	AddSection(Section)
-	SetResultsTable(t *Table)
+	Status() Result
 }
 
 type Reporter interface {
@@ -13,7 +12,6 @@ type Reporter interface {
 
 type report struct {
 	sections []Section
-	table    Table
 }
 
 func New() Report {
@@ -28,10 +26,17 @@ func (r *report) AddSection(s Section) {
 	r.sections = append(r.sections, s)
 }
 
-func (r *report) SetResultsTable(t *Table) {
-	r.table = *t
-}
-
-func (r *report) ResultsTable() *Table {
-	return &r.table
+func (r *report) Status() Result {
+	status := Pass
+	for _, section := range r.sections {
+		for _, test := range section.Tests() {
+			switch test.Result {
+			case Fail:
+				return Fail
+			case Warning:
+				status = Warning
+			}
+		}
+	}
+	return status
 }
