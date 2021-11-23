@@ -18,6 +18,8 @@ const (
 	borderBottomRight = '╯'
 	borderVertical    = '│'
 	borderHorizontal  = '─'
+	borderLeftT       = '├'
+	borderRightT      = '┤'
 )
 
 func Terminal(rep report.Report) error {
@@ -28,28 +30,53 @@ func Terminal(rep report.Report) error {
 	return (&terminalOutput{width: width}).Output(rep)
 }
 
+func safeRepeat(input string, repeat int) string {
+	if repeat <= 0 {
+		return ""
+	}
+	return strings.Repeat(input, repeat)
+}
+
 type terminalOutput struct {
 	width int
 }
 
 func (t *terminalOutput) printHeader(heading string) {
 	_ = tml.Printf(
-		"\r\n<dim>%c%c</dim> %s <dim>%s%c</dim>\n",
-		borderTopLeft, borderHorizontal,
+		"\r\n<dim>%c%c%c</dim> <bold>%s</bold> <dim>%c%s%c</dim>\n",
+		borderTopLeft,
+		borderHorizontal,
+		borderRightT,
 		heading,
-		strings.Repeat(string(borderHorizontal), t.width-5-len(heading)),
+		borderLeftT,
+		safeRepeat(string(borderHorizontal), t.width-7-len([]rune(heading))),
 		borderTopRight,
+	)
+	t.printBlank()
+}
+
+func (t *terminalOutput) printDivider(heading string) {
+	t.printBlank()
+	_ = tml.Printf(
+		"<dim>%c%c%c</dim> <bold>%s</bold> <dim>%c%s%c</dim>\n",
+		borderLeftT,
+		borderHorizontal,
+		borderRightT,
+		heading,
+		borderLeftT,
+		safeRepeat(string(borderHorizontal), t.width-7-len([]rune(heading))),
+		borderRightT,
 	)
 	t.printBlank()
 }
 
 func (t *terminalOutput) printFooter() {
 	t.printBlank()
-	_ = tml.Printf("<dim>%c%s%c</dim>\n", borderBottomLeft, strings.Repeat(string(borderHorizontal), t.width-2), borderBottomRight)
+	_ = tml.Printf("<dim>%c%s%c</dim>\n", borderBottomLeft, safeRepeat(string(borderHorizontal), t.width-2), borderBottomRight)
 }
 
 func (t *terminalOutput) printBlank() {
-	t.printIn("")
+	t.printIn(0, "")
 }
 
 var rgxHtml = regexp.MustCompile(`<[^>]+>`)
@@ -62,18 +89,15 @@ func (t *terminalOutput) limitSize(input string, size int) []string {
 	var word string
 	var words []string
 	var inTag bool
-	var lastRune rune
-	var hasClosing bool
 	for _, r := range []rune(input) {
 		if inTag {
 			word += string(r)
-			if hasClosing && r == '>' {
+			if r == '>' {
 				inTag = false
-				hasClosing = false
-				words = append(words, word)
+				if word != "" {
+					words = append(words, word)
+				}
 				word = ""
-			} else if lastRune == '<' && r == '/' {
-				hasClosing = true
 			}
 		} else {
 			if r == '<' {
@@ -83,12 +107,20 @@ func (t *terminalOutput) limitSize(input string, size int) []string {
 				word = "<"
 				inTag = true
 			} else if r == ' ' {
-				words = append(words, word)
+				if word != "" {
+					words = append(words, word)
+					word = ""
+				}
+			} else if r == '\n' {
+				if word != "" {
+					words = append(words, word)
+					word = ""
+				}
+				words = append(words, "\n")
 			} else {
 				word += string(r)
 			}
 		}
-		lastRune = r
 	}
 	if word != "" {
 		words = append(words, word)
@@ -97,23 +129,31 @@ func (t *terminalOutput) limitSize(input string, size int) []string {
 	var line string
 	var currentSize int
 	var lines []string
+	var hasContent bool
 
 	for _, word := range words {
+		if word == "\n" {
+			lines = append(lines, line)
+			line = ""
+			continue
+		}
 		if word[0] == '<' {
 			line += word
 			continue
 		}
-		if currentSize+len(word) > size {
+		if currentSize+len([]rune(word))+1 > size {
 			lines = append(lines, line)
 			line = word
-			currentSize = len(word)
+			hasContent = true
+			currentSize = len([]rune(word))
 		} else {
-			if line != "" {
+			if line != "" && hasContent {
 				line += " "
 				currentSize++
 			}
 			line += word
-			currentSize += len(word)
+			hasContent = true
+			currentSize += len([]rune(word))
 		}
 	}
 
@@ -121,27 +161,35 @@ func (t *terminalOutput) limitSize(input string, size int) []string {
 		lines = append(lines, line)
 	}
 
+	if len(lines) == 0 {
+		return []string{""}
+	}
+
 	return lines
 }
 
-func (t *terminalOutput) printIn(format string, args ...interface{}) {
+func (t *terminalOutput) printIn(indent int, format string, args ...interface{}) {
 
-	realStr := stripTags(fmt.Sprintf(format, args...))
-	str := tml.Sprintf(format, args...)
-	repeat := t.width - 4 - len([]rune(realStr))
-	padded := str
-	if repeat > 0 {
-		padded = str + strings.Repeat(" ", repeat)
+	lines := t.limitSize(fmt.Sprintf(format, args...), t.width-indent-4)
+
+	for _, line := range lines {
+		realStr := stripTags(line)
+		repeat := t.width - 4 - indent - len([]rune(realStr))
+		padded := tml.Sprintf(line) + safeRepeat(" ", repeat)
+		_ = tml.Printf("<dim>%c</dim> %s", borderVertical, safeRepeat(" ", indent))
+		fmt.Printf("%s", padded)
+		_ = tml.Printf(" <dim>%c</dim>\n", borderVertical)
 	}
-	_ = tml.Printf("<dim>%c</dim> ", borderVertical)
-	fmt.Printf("%s", padded)
-	_ = tml.Printf(" <dim>%c</dim>\n", borderVertical)
 }
 
 func (t *terminalOutput) Output(rep report.Report) error {
 
-	for _, section := range rep.Sections() {
-		t.printHeader(section.Heading())
+	for i, section := range rep.Sections() {
+		if i == 0 {
+			t.printHeader(section.Heading())
+		} else {
+			t.printDivider(section.Heading())
+		}
 		var maxKeyLen int
 		for _, keyVal := range section.KeyValues() {
 			if len(keyVal.Key()) > maxKeyLen {
@@ -149,13 +197,11 @@ func (t *terminalOutput) Output(rep report.Report) error {
 			}
 		}
 		for _, keyVal := range section.KeyValues() {
-			paddedKey := strings.Repeat(" ", 1+maxKeyLen-len(keyVal.Key())) + keyVal.Key()
-			t.printIn("%s  <blue>%s</blue>", paddedKey, keyVal.Value())
+			t.printIn(1+maxKeyLen-len(keyVal.Key()), "%s  <blue>%s</blue>", keyVal.Key(), keyVal.Value())
 		}
-		t.printFooter()
 	}
 
-	t.printHeader("Security")
+	t.printDivider("Security")
 	for i, test := range rep.ResultsTable().Tests() {
 
 		if i > 0 {
@@ -164,13 +210,13 @@ func (t *terminalOutput) Output(rep report.Report) error {
 
 		switch test.Result {
 		case report.Pass:
-			t.printIn("<green>✔ %s", test.Name)
+			t.printIn(0, "<green>✔ %s", test.Name)
 		case report.PartialFail:
-			t.printIn("<yellow>⚠ %s", test.Name)
+			t.printIn(0, "<yellow>⚠ %s", test.Name)
 		case report.Fail:
-			t.printIn("<red>× %s", test.Name)
+			t.printIn(0, "<red>× %s", test.Name)
 		}
-		t.printIn("  FUCK")
+		t.printIn(2, test.Description)
 	}
 	t.printFooter()
 

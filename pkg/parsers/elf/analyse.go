@@ -6,5 +6,7 @@ func (m *Metadata) analyse() error {
 
 	m.checkHardened()
 
+	m.checkDisclosure()
+
 	return nil
 }

@@ -15,4 +15,10 @@ type Metadata struct {
 	ELF       *elf.File
 	Compiler  Compiler
 	Hardening Hardening
+	Notes     []Note
+}
+
+type Note struct {
+	Heading string
+	Content string
 }
