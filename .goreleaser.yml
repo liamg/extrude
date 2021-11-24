@@ -32,7 +32,6 @@ dockers:
     ids:
     - extrude
     dockerfile: Dockerfile
-    use: buildx
     skip_push: auto
     image_templates:
     - "ghcr.io/liamg/extrude:latest"
