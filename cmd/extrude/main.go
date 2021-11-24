@@ -14,7 +14,7 @@ var options output.Options
 var failOnWarning bool
 
 var rootCmd = &cobra.Command{
-	Use:   "extrude",
+	Use:   "extrude [file]",
 	Short: "Analyse an executable",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

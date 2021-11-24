@@ -10,7 +10,7 @@ Scan binaries for missing security features, information disclosure and more.
 
 ```
 Usage:
-  extrude [flags]
+  extrude [flags] [file]
 
 Flags:
   -a, --all               Show details of all tests, not just those which failed.
