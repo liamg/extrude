@@ -10,6 +10,8 @@ builds:
       - CGO_ENABLED=0
     goos:
       - linux
+      - windows
+      - darwin
     goarch:
       - "386"
       - amd64
@@ -23,4 +25,15 @@ release:
   github:
     owner: liamg
     name: extrude
+
+dockers:
+  - goos: linux
+    goarch: amd64
+    ids:
+    - extrude
+    dockerfile: Dockerfile
+    skip_push: auto
+    image_templates:
+    - "ghcr.io/liamg/extrude:latest"
+    - "ghcr.io/liamg/extrude:{{ .Tag }}"
 
