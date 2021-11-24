@@ -34,6 +34,11 @@ dockers:
     dockerfile: Dockerfile
     skip_push: auto
     image_templates:
-    - "ghcr.io/liamg/extrude:latest"
-    - "ghcr.io/liamg/extrude:{{ .Tag }}"
-
+    - "ghcr.io/liamg/{{ .ProjectName }}:{{ .Version }}"
+docker_manifests:
+- name_template: ghcr.io/liamg/{{ .ProjectName }}:{{ .Version }}
+  image_templates:
+  - ghcr.io/liamg/{{ .ProjectName }}:{{ .Version }}
+- name_template: ghcr.io/liamg/{{ .ProjectName }}:latest
+  image_templates:
+  - ghcr.io/liamg/{{ .ProjectName }}:{{ .Version }}
