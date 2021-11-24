@@ -19,6 +19,14 @@ Flags:
 
 ```
 
+## Docker
+
+You can optionally run extrude with docker via:
+
+```
+docker run -v `pwd`:/blah -it ghcr.io/liamg/extrude /blah/targetfile
+```
+
 ## TODO
 
 - Add support for Mach-o
