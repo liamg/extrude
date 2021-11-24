@@ -3,9 +3,9 @@ package elf
 import (
 	"debug/elf"
 
-	"github.com/liamg/extrude/pkg/parsers/elf/hardening"
+	"github.com/liamg/extrude/pkg/parser/elf/hardening"
 
-	"github.com/liamg/extrude/pkg/parsers/elf/compiler"
+	"github.com/liamg/extrude/pkg/parser/elf/compiler"
 
 	"github.com/liamg/extrude/pkg/format"
 )

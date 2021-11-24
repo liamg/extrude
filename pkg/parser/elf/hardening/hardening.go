@@ -6,11 +6,16 @@ import (
 
 type Attributes struct {
 	StackProtected           bool
-	FortifySourceFunctions   bool
+	FortifySourceFunctions   FortifySourceFunctions
 	PositionIndependent      bool
 	ReadOnlyRelocations      bool
 	ImmediateBinding         bool
 	NonExecutableStackHeader bool
+}
+
+type FortifySourceFunctions struct {
+	Total     int
+	Fortified int
 }
 
 func IdentifyAttributes(e *elf.File) Attributes {

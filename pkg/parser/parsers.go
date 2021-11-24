@@ -4,7 +4,7 @@ import (
 	"io"
 
 	"github.com/liamg/extrude/pkg/format"
-	"github.com/liamg/extrude/pkg/parsers/elf"
+	"github.com/liamg/extrude/pkg/parser/elf"
 	"github.com/liamg/extrude/pkg/report"
 )
 

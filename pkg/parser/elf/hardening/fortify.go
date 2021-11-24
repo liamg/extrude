@@ -5,24 +5,21 @@ import (
 	"fmt"
 )
 
-func checkSourceFortified(e *elf.File) bool {
+func checkSourceFortified(e *elf.File) (info FortifySourceFunctions) {
 	symbols, _ := e.Symbols()
 	dynSymbols, _ := e.DynamicSymbols()
-
-	var hasLibc bool
-	var hasProtected bool
 
 	for _, symbol := range append(symbols, dynSymbols...) {
 		for _, libcFunc := range libcFunctions {
 			if fmt.Sprintf("__%s_chk", libcFunc) == symbol.Name {
-				hasProtected = true
+				info.Fortified++
 			} else if symbol.Name == libcFunc {
-				hasLibc = true
+				info.Total++
 			}
 		}
 	}
 
-	return !hasLibc || hasProtected
+	return
 }
 
 var libcFunctions = []string{

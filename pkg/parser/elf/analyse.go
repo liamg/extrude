@@ -1,8 +1,8 @@
 package elf
 
 import (
-	"github.com/liamg/extrude/pkg/parsers/elf/compiler"
-	"github.com/liamg/extrude/pkg/parsers/elf/hardening"
+	"github.com/liamg/extrude/pkg/parser/elf/compiler"
+	"github.com/liamg/extrude/pkg/parser/elf/hardening"
 )
 
 func (m *Metadata) analyse() error {
