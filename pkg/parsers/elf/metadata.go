@@ -3,6 +3,10 @@ package elf
 import (
 	"debug/elf"
 
+	"github.com/liamg/extrude/pkg/parsers/elf/hardening"
+
+	"github.com/liamg/extrude/pkg/parsers/elf/compiler"
+
 	"github.com/liamg/extrude/pkg/format"
 )
 
@@ -12,10 +16,10 @@ type Metadata struct {
 		Name   string
 		Format format.Format
 	}
-	ELF       *elf.File
-	Compiler  Compiler
-	Hardening Hardening
-	Notes     []Note
+	ELF          *elf.File
+	CompilerInfo compiler.Info
+	Hardening    hardening.Attributes
+	Notes        []Note
 }
 
 type Note struct {

@@ -17,9 +17,11 @@ func (m *Metadata) CreateReport() (report.Report, error) {
 		overview.AddKeyValue("Byte Order", m.ELF.ByteOrder.String())
 	}
 
-	overview.AddKeyValue("Compiler Name", m.Compiler.Name)
-	overview.AddKeyValue("Compiler Version", m.Compiler.Version)
-	overview.AddKeyValue("Source Language", m.Compiler.Language)
+	overview.AddKeyValue("Compiler Name", m.CompilerInfo.Compiler.String())
+	if m.CompilerInfo.Version != "" {
+		overview.AddKeyValue("Compiler Version", m.CompilerInfo.Version)
+	}
+	overview.AddKeyValue("Source Language", m.CompilerInfo.Language.String())
 
 	rep.AddSection(overview)
 
@@ -38,15 +40,27 @@ func (m *Metadata) CreateReport() (report.Report, error) {
 	)
 
 	security.AddTest(
+		"Immediate Binding",
+		boolToResult(m.Hardening.ImmediateBinding),
+		`The runtime linker will resolve all relocations before starting program execution, meaning memory corruption attacks are much less likely.`,
+	)
+
+	security.AddTest(
 		"Fortified Source Functions",
 		boolToResult(m.Hardening.FortifySourceFunctions),
 		`This is a security feature which applies to GLIBC functions vulnerable to buffer overflow attacks. It overrides the use of such functions with a safe variation and is enabled by default on most Linux platforms. If GLIBC functions are used within the binary, this test will fail if none are fortified.`,
 	)
 
 	security.AddTest(
-		"Stack Protection",
+		"Stack Canary",
 		boolToResult(m.Hardening.StackProtected),
 		`The basic idea behind stack protection is to push a "canary" (a randomly chosen integer) on the stack just after the function return pointer has been pushed. The canary value is then checked before the function returns; if it has changed, the program will abort. Generally, stack buffer overflow (aka "stack smashing") attacks will have to change the value of the canary as they write beyond the end of the buffer before they can get to the return pointer. Since the value of the canary is unknown to the attacker, it cannot be replaced by the attack. Thus, the stack protection allows the program to abort when that happens rather than return to wherever the attacker wanted it to go.`,
+	)
+
+	security.AddTest(
+		"Non-Executable Stack",
+		boolToResult(m.Hardening.NonExecutableStackHeader),
+		`Preventing the stack from being executable means that malicious code injected onto the stack cannot be run.`,
 	)
 
 	rep.AddSection(security)

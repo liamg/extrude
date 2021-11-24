@@ -36,7 +36,7 @@ func TestELFDerivingCompiler(t *testing.T) {
 			reporter, err := New().Parse(f, path, format.ELF)
 			require.NoError(t, err)
 
-			assert.Equal(t, test.expected, reporter.(*Metadata).Compiler.Name)
+			assert.Equal(t, test.expected, reporter.(*Metadata).CompilerInfo.Name)
 		})
 	}
 
