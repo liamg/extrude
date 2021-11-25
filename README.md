@@ -1,6 +1,6 @@
 # extrude
 
-Scan binaries for missing security features, information disclosure and more.
+Analyse binaries for missing security features, information disclosure and more.
 
 :construction: Extrude is in the early stages of development, and currently only supports ELF binaries.
 
