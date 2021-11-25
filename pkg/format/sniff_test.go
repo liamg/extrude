@@ -16,19 +16,19 @@ func TestFormatSniffing(t *testing.T) {
 	}{
 		{
 			content:  []byte{0xfe, 0xed, 0xfa, 0xce},
-			expected: MachO32,
+			expected: MachO,
 		},
 		{
 			content:  []byte{0xce, 0xfa, 0xed, 0xfe},
-			expected: MachO32,
+			expected: MachO,
 		},
 		{
 			content:  []byte{0xfe, 0xed, 0xfa, 0xcf},
-			expected: MachO64,
+			expected: MachO,
 		},
 		{
 			content:  []byte{0xcf, 0xfa, 0xed, 0xfe},
-			expected: MachO64,
+			expected: MachO,
 		},
 		{
 			content:  []byte{0x7f, 'E', 'L', 'F'},
