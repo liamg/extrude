@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/liamg/tml v0.6.0
 	github.com/spf13/cobra v1.4.0
-	github.com/stretchr/testify v1.7.2
+	github.com/stretchr/testify v1.7.5
 	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 )
 
